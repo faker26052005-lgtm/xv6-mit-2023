@@ -136,3 +136,12 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+//this system call enable trace flag in proc that call it
+uint64
+sys_trace_pgtbl(void)
+{
+  struct proc *p = myproc();
+  p->trace_pgtbl = 1;
+  return 0;
+}

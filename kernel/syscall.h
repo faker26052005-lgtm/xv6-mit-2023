@@ -31,3 +31,5 @@
 #define SYS_munmap    28
 #define SYS_connect   29
 #define SYS_pgaccess  30
+
+#define SYS_trace_pgtbl 31
