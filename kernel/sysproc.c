@@ -74,7 +74,43 @@ sys_sleep(void)
 int
 sys_pgaccess(void)
 {
-  // lab pgtbl: your code here.
+  uint64 va;
+  int len;
+  uint64 user_mask_ptr;
+
+  // Retrieve system call arguments from user space
+  argaddr(0, &va);
+  argint(1, &len);
+  argaddr(2, &user_mask_ptr);
+
+  // Limit the number of pages to scan
+  if(len > 64) 
+    return -1;
+
+  struct proc *p = myproc();
+  unsigned int abits = 0;
+
+  // Iterate through each page to check the access bit
+  for(int i = 0; i < len; i++){
+    uint64 page_va = va + i * PGSIZE;
+    
+    // Find the Page Table Entry (PTE) for the given virtual address
+    pte_t *pte = walk(p->pagetable, page_va, 0);
+    
+    // Check if the PTE exists, is valid (PTE_V), and has been accessed (PTE_A)
+    if(pte != 0 && (*pte & PTE_V) && (*pte & PTE_A)){
+      // Set the corresponding bit in the bitmask
+      abits |= (1 << i);   
+      
+      // Clear the Access bit (PTE_A) as required to track future accesses
+      *pte &= ~PTE_A;      
+    }
+  }
+
+  // Copy the resulting bitmask back to user space memory
+  if(copyout(p->pagetable, user_mask_ptr, (char *)&abits, sizeof(abits)) < 0)
+    return -1;
+
   return 0;
 }
 #endif
